@@ -147,9 +147,9 @@ func (game *GameWorld) Setup(w *ecs.World) {
 	for _, system := range w.Systems() {
 		switch sys := system.(type) {
 		case *common.RenderSystem:
-			sys.Add(&character.BasicEntity, &character.RenderComponent, &character.SpaceComponent)
+			sys.AddByInterface(&character)
 			for _, v := range tileComponents {
-				sys.Add(&v.BasicEntity, &v.RenderComponent, &v.SpaceComponent)
+				sys.AddByInterface(v)
 			}
 
 		}

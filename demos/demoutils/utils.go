@@ -52,7 +52,7 @@ func NewBackground(world *ecs.World, width, height int, colorA, colorB color.Col
 	for _, system := range world.Systems() {
 		switch sys := system.(type) {
 		case *common.RenderSystem:
-			sys.Add(&bg.BasicEntity, &bg.RenderComponent, &bg.SpaceComponent)
+			sys.AddByInterface(bg)
 		}
 	}
 

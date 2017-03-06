@@ -53,6 +53,10 @@ type ControlComponent struct {
 	SchemeHoriz string
 }
 
+func (c *ControlComponent) GetControlComponent() *ControlComponent {
+	return c
+}
+
 type Tile struct {
 	ecs.BasicEntity
 	common.RenderComponent
@@ -170,33 +174,16 @@ func (scene *DefaultScene) Setup(w *ecs.World) {
 	for _, system := range w.Systems() {
 		switch sys := system.(type) {
 		case *common.RenderSystem:
-			sys.Add(
-				&hero.BasicEntity,
-				&hero.RenderComponent,
-				&hero.SpaceComponent,
-			)
+			sys.AddByInterface(hero)
 
 		case *common.AnimationSystem:
-			sys.Add(
-				&hero.BasicEntity,
-				&hero.AnimationComponent,
-				&hero.RenderComponent,
-			)
+			sys.AddByInterface(hero)
 
 		case *ControlSystem:
-			sys.Add(
-				&hero.BasicEntity,
-				&hero.AnimationComponent,
-				&hero.ControlComponent,
-				&hero.SpaceComponent,
-			)
+			sys.AddByInterface(hero)
 
 		case *SpeedSystem:
-			sys.Add(
-				&hero.BasicEntity,
-				&hero.SpeedComponent,
-				&hero.SpaceComponent,
-			)
+			sys.AddByInterface(hero)
 		}
 	}
 
@@ -260,7 +247,7 @@ func (scene *DefaultScene) Setup(w *ecs.World) {
 		switch sys := system.(type) {
 		case *common.RenderSystem:
 			for _, v := range tileComponents {
-				sys.Add(&v.BasicEntity, &v.RenderComponent, &v.SpaceComponent)
+				sys.AddByInterface(v)
 			}
 
 		}
@@ -337,6 +324,10 @@ type SpeedComponent struct {
 	engo.Point
 }
 
+func (sc *SpeedComponent) GetSpeedComponent() *SpeedComponent {
+	return sc
+}
+
 type speedEntity struct {
 	*ecs.BasicEntity
 	*SpeedComponent
@@ -361,8 +352,14 @@ func (s *SpeedSystem) New(*ecs.World) {
 	})
 }
 
-func (s *SpeedSystem) Add(basic *ecs.BasicEntity, speed *SpeedComponent, space *common.SpaceComponent) {
-	s.entities = append(s.entities, speedEntity{basic, speed, space})
+type Speedable interface {
+	common.BasicFace
+	GetSpeedComponent() *SpeedComponent
+	common.SpaceFace
+}
+
+func (s *SpeedSystem) AddByInterface(o Speedable) {
+	s.entities = append(s.entities, speedEntity{o.GetBasicEntity(), o.GetSpeedComponent(), o.GetSpaceComponent()})
 }
 
 func (s *SpeedSystem) Remove(basic ecs.BasicEntity) {
@@ -410,12 +407,19 @@ type controlEntity struct {
 	*common.SpaceComponent
 }
 
+type Controlable interface {
+	common.BasicFace
+	common.AnimationFace
+	GetControlComponent() *ControlComponent
+	common.SpaceFace
+}
+
 type ControlSystem struct {
 	entities []controlEntity
 }
 
-func (c *ControlSystem) Add(basic *ecs.BasicEntity, anim *common.AnimationComponent, control *ControlComponent, space *common.SpaceComponent) {
-	c.entities = append(c.entities, controlEntity{basic, anim, control, space})
+func (c *ControlSystem) AddByInterface(o Controlable) {
+	c.entities = append(c.entities, controlEntity{o.GetBasicEntity(), o.GetAnimationComponent(), o.GetControlComponent(), o.GetSpaceComponent()})
 }
 
 func (c *ControlSystem) Remove(basic ecs.BasicEntity) {

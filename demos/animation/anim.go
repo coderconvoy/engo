@@ -54,11 +54,11 @@ func (scene *DefaultScene) Setup(w *ecs.World) {
 	for _, system := range w.Systems() {
 		switch sys := system.(type) {
 		case *common.RenderSystem:
-			sys.Add(&hero.BasicEntity, &hero.RenderComponent, &hero.SpaceComponent)
+			sys.AddByInterface(hero)
 		case *common.AnimationSystem:
-			sys.Add(&hero.BasicEntity, &hero.AnimationComponent, &hero.RenderComponent)
+			sys.AddByInterface(hero)
 		case *ControlSystem:
-			sys.Add(&hero.BasicEntity, &hero.AnimationComponent)
+			sys.AddByInterface(hero)
 		}
 	}
 }
@@ -94,8 +94,13 @@ type ControlSystem struct {
 	entities []controlEntity
 }
 
-func (c *ControlSystem) Add(basic *ecs.BasicEntity, anim *common.AnimationComponent) {
-	c.entities = append(c.entities, controlEntity{basic, anim})
+type Controlable interface {
+	common.BasicFace
+	common.AnimationFace
+}
+
+func (c *ControlSystem) AddByInterface(o Controlable) {
+	c.entities = append(c.entities, controlEntity{o.GetBasicEntity(), o.GetAnimationComponent()})
 }
 
 func (c *ControlSystem) Remove(basic ecs.BasicEntity) {

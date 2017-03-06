@@ -71,11 +71,11 @@ func (*DefaultScene) Setup(w *ecs.World) {
 	for _, system := range w.Systems() {
 		switch sys := system.(type) {
 		case *common.RenderSystem:
-			sys.Add(&guy.BasicEntity, &guy.RenderComponent, &guy.SpaceComponent)
+			sys.AddByInterface(&guy)
 		case *common.CollisionSystem:
-			sys.Add(&guy.BasicEntity, &guy.CollisionComponent, &guy.SpaceComponent)
+			sys.AddByInterface(&guy)
 		case *ControlSystem:
-			sys.Add(&guy.BasicEntity, &guy.SpaceComponent)
+			sys.AddByInterface(&guy)
 		}
 	}
 }
@@ -91,8 +91,13 @@ type ControlSystem struct {
 	entities []controlEntity
 }
 
-func (c *ControlSystem) Add(basic *ecs.BasicEntity, space *common.SpaceComponent) {
-	c.entities = append(c.entities, controlEntity{basic, space})
+type Controlable interface {
+	common.BasicFace
+	common.SpaceFace
+}
+
+func (c *ControlSystem) AddByInterface(o Controlable) {
+	c.entities = append(c.entities, controlEntity{o.GetBasicEntity(), o.GetSpaceComponent()})
 }
 
 func (c *ControlSystem) Remove(basic ecs.BasicEntity) {
@@ -164,11 +169,11 @@ func NewRock(world *ecs.World, position engo.Point) {
 	for _, system := range world.Systems() {
 		switch sys := system.(type) {
 		case *common.RenderSystem:
-			sys.Add(&rock.BasicEntity, &rock.RenderComponent, &rock.SpaceComponent)
+			sys.AddByInterface(&rock)
 		case *common.CollisionSystem:
-			sys.Add(&rock.BasicEntity, &rock.CollisionComponent, &rock.SpaceComponent)
+			sys.AddByInterface(&rock)
 		case *FallingSystem:
-			sys.Add(&rock.BasicEntity, &rock.SpaceComponent)
+			sys.AddByInterface(&rock)
 		}
 	}
 }
@@ -182,8 +187,8 @@ type FallingSystem struct {
 	entities []fallingEntity
 }
 
-func (f *FallingSystem) Add(basic *ecs.BasicEntity, space *common.SpaceComponent) {
-	f.entities = append(f.entities, fallingEntity{basic, space})
+func (f *FallingSystem) AddByInterface(o Controlable) {
+	f.entities = append(f.entities, fallingEntity{o.GetBasicEntity(), o.GetSpaceComponent()})
 }
 
 func (f *FallingSystem) Remove(basic ecs.BasicEntity) {
