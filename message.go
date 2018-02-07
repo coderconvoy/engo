@@ -15,6 +15,10 @@ type MessageManager struct {
 
 // Dispatch sends a message to all subscribed handlers of the message's type
 func (mm *MessageManager) Dispatch(message Message) {
+	if mm == nil {
+		//makes it easier for tests to run on systems that dispatch messages without starting a whole system
+		return
+	}
 	handlers := mm.listeners[message.Type()]
 
 	for _, handler := range handlers {
